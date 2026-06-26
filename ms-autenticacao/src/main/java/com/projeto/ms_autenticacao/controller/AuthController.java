@@ -4,6 +4,7 @@ import com.projeto.ms_autenticacao.domain.Usuario;
 import com.projeto.ms_autenticacao.dto.LoginRequestDto;
 import com.projeto.ms_autenticacao.dto.RegisterRequestDto;
 import com.projeto.ms_autenticacao.dto.ResponseTokenDto;
+import com.projeto.ms_autenticacao.mensaging.producer.UsuarioProducer;
 import com.projeto.ms_autenticacao.repository.UsuarioRepository;
 import com.projeto.ms_autenticacao.security.TokenService;
 import org.springframework.http.HttpStatus;
@@ -22,11 +23,14 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final UsuarioProducer usuarioProducer;
 
-    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService) {
+
+    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService, UsuarioProducer usuarioProducer) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+        this.usuarioProducer = usuarioProducer;
     }
 
     @PostMapping("/login")
@@ -50,8 +54,7 @@ public class AuthController {
             usuario.setSenha(passwordEncoder.encode(registerRequestDto.senha()));
             usuario.setNome(registerRequestDto.nome());
             usuario.setEmail(registerRequestDto.email());
-
-            usuarioRepository.save(usuario);
+            usuarioProducer.enviarMensagem(usuarioRepository.save(usuario), registerRequestDto);
 
             String token = this.tokenService.gerarToken(usuario);
 

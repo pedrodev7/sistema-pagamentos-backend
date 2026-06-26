@@ -1,4 +1,4 @@
-package com.projeto.ms_transacoes;
+package com.projeto.ms_transacoes.service;
 
 import com.projeto.ms_transacoes.domain.Conta;
 import com.projeto.ms_transacoes.domain.StatusTransacao;

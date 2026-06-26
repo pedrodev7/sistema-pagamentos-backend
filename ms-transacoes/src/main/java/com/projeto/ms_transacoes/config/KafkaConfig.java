@@ -11,7 +11,6 @@ public class KafkaConfig {
     @Bean
     public NewTopic transferenciaTopic() {
         return TopicBuilder.name("transferencia-realizada-topic")
-                // Como estamos rodando apenas 1 broker (nó) localmente, partições e réplicas ficam em 1
                 .partitions(1)
                 .replicas(1)
                 .build();

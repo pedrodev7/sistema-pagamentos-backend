@@ -7,6 +7,7 @@ import com.projeto.ms_autenticacao.dto.ResponseTokenDto;
 import com.projeto.ms_autenticacao.mensaging.producer.UsuarioProducer;
 import com.projeto.ms_autenticacao.repository.UsuarioRepository;
 import com.projeto.ms_autenticacao.security.TokenService;
+import com.projeto.ms_autenticacao.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,25 +25,19 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final UsuarioProducer usuarioProducer;
+    private final AuthService authService;
 
-
-    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService, UsuarioProducer usuarioProducer) {
+    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService, UsuarioProducer usuarioProducer, AuthService authService) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.usuarioProducer = usuarioProducer;
+        this.authService = authService;
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequestDto loginRequestDto){
-        Usuario usuario = usuarioRepository.findByEmail(loginRequestDto.email()).orElseThrow(() -> new RuntimeException("Usuario nãol encontrado"));
-        if(passwordEncoder.matches(loginRequestDto.senha(), usuario.getSenha())){
-            String token = this.tokenService.gerarToken(usuario);
-            return ResponseEntity.status(HttpStatus.OK).body(new ResponseTokenDto(token));
-        }
-
-        return ResponseEntity.badRequest().build();
-
+        return ResponseEntity.status(HttpStatus.OK).body(authService.login(loginRequestDto));
     }
 
     @PostMapping("/register")

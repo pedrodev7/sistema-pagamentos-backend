@@ -21,17 +21,10 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
-    private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final TokenService tokenService;
-    private final UsuarioProducer usuarioProducer;
+
     private final AuthService authService;
 
-    public AuthController(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService, UsuarioProducer usuarioProducer, AuthService authService) {
-        this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenService = tokenService;
-        this.usuarioProducer = usuarioProducer;
+    public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
@@ -41,22 +34,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registrar(@RequestBody RegisterRequestDto registerRequestDto){
-        Optional<Usuario> findUsuario = usuarioRepository.findByEmail(registerRequestDto.email());
-
-        if(findUsuario.isEmpty()){
-            Usuario usuario = new Usuario();
-            usuario.setSenha(passwordEncoder.encode(registerRequestDto.senha()));
-            usuario.setNome(registerRequestDto.nome());
-            usuario.setEmail(registerRequestDto.email());
-            usuarioProducer.enviarMensagem(usuarioRepository.save(usuario), registerRequestDto);
-
-            String token = this.tokenService.gerarToken(usuario);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(new ResponseTokenDto(token));
-        }
-
-        return ResponseEntity.badRequest().build();
-
+    public ResponseEntity<?> registrar(@RequestBody RegisterRequestDto registerRequestDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(registerRequestDto));
     }
 }

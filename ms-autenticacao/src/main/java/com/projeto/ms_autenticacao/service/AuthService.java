@@ -2,6 +2,7 @@ package com.projeto.ms_autenticacao.service;
 
 import com.projeto.ms_autenticacao.domain.Usuario;
 import com.projeto.ms_autenticacao.dto.LoginRequestDto;
+import com.projeto.ms_autenticacao.dto.RegisterRequestDto;
 import com.projeto.ms_autenticacao.dto.ResponseTokenDto;
 import com.projeto.ms_autenticacao.repository.UsuarioRepository;
 import com.projeto.ms_autenticacao.security.TokenService;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 @Service
 public class AuthService implements UserDetailsService {
@@ -41,5 +43,23 @@ public class AuthService implements UserDetailsService {
         }
 
         throw new RuntimeException("Senha incorreta");
+    }
+
+    public ResponseTokenDto register(RegisterRequestDto registerRequestDto) {
+        Optional<Usuario> findUsuario = usuarioRepository.findByEmail(registerRequestDto.email());
+
+        if(findUsuario.isEmpty()){
+            Usuario usuario = new Usuario();
+            usuario.setSenha(passwordEncoder.encode(registerRequestDto.senha()));
+            usuario.setNome(registerRequestDto.nome());
+            usuario.setEmail(registerRequestDto.email());
+            usuarioRepository.save(usuario);
+
+            String token = this.tokenService.gerarToken(usuario);
+
+            return new ResponseTokenDto(token);
+        }
+
+        throw new RuntimeException("Usuario já existe");
     }
 }

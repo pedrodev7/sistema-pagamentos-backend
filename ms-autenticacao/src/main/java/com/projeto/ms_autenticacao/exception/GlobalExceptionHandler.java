@@ -31,4 +31,14 @@ public class GlobalExceptionHandler {
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(responseError);
     }
+
+    @ExceptionHandler(EntityExistsException.class)
+    public ResponseEntity<?> entityExistsException(EntityExistsException ex){
+        ResponseError responseError = new ResponseError(
+                ex.getMessage(),
+                HttpStatus.CONFLICT,
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(responseError);
+    }
 }

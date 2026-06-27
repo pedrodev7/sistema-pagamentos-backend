@@ -4,6 +4,8 @@ import com.projeto.ms_autenticacao.domain.Usuario;
 import com.projeto.ms_autenticacao.dto.LoginRequestDto;
 import com.projeto.ms_autenticacao.dto.RegisterRequestDto;
 import com.projeto.ms_autenticacao.dto.ResponseTokenDto;
+import com.projeto.ms_autenticacao.exception.EntityExistsException;
+import com.projeto.ms_autenticacao.mensaging.producer.UsuarioProducer;
 import com.projeto.ms_autenticacao.repository.UsuarioRepository;
 import com.projeto.ms_autenticacao.security.TokenService;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -21,12 +23,14 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
+    private final UsuarioProducer usuarioProducer;
 
-    public AuthService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService, AuthenticationManager authenticationManager) {
+    public AuthService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService, AuthenticationManager authenticationManager, UsuarioProducer usuarioProducer) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
         this.authenticationManager = authenticationManager;
+        this.usuarioProducer = usuarioProducer;
     }
 
 
@@ -39,20 +43,19 @@ public class AuthService {
     }
 
     public ResponseTokenDto register(RegisterRequestDto registerRequestDto) {
-        Optional<Usuario> findUsuario = usuarioRepository.findByEmail(registerRequestDto.email());
-
-        if(findUsuario.isEmpty()){
-            Usuario usuario = new Usuario();
-            usuario.setSenha(passwordEncoder.encode(registerRequestDto.senha()));
-            usuario.setNome(registerRequestDto.nome());
-            usuario.setEmail(registerRequestDto.email());
-            usuarioRepository.save(usuario);
-
-            String token = this.tokenService.gerarToken(usuario);
-
-            return new ResponseTokenDto(token);
+        if (usuarioRepository.existsByEmail(registerRequestDto.email())) {
+            throw new EntityExistsException("Usuario já cadastrado com o email: " + registerRequestDto.email());
         }
 
-        throw new RuntimeException("Usuario já existe");
+        Usuario usuario = new Usuario();
+        usuario.setSenha(passwordEncoder.encode(registerRequestDto.senha()));
+        usuario.setNome(registerRequestDto.nome());
+        usuario.setEmail(registerRequestDto.email());
+        usuarioRepository.save(usuario);
+
+        usuarioProducer.enviarMensagem(usuario, registerRequestDto);
+
+        return new ResponseTokenDto(tokenService.gerarToken(usuario));
+
     }
 }

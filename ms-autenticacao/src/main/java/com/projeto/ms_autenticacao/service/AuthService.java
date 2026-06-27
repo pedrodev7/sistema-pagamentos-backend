@@ -6,43 +6,36 @@ import com.projeto.ms_autenticacao.dto.RegisterRequestDto;
 import com.projeto.ms_autenticacao.dto.ResponseTokenDto;
 import com.projeto.ms_autenticacao.repository.UsuarioRepository;
 import com.projeto.ms_autenticacao.security.TokenService;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.Optional;
 
 @Service
-public class AuthService implements UserDetailsService {
+public class AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
+    private final AuthenticationManager authenticationManager;
 
-    public AuthService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService) {
+    public AuthService(UsuarioRepository usuarioRepository, PasswordEncoder passwordEncoder, TokenService tokenService, AuthenticationManager authenticationManager) {
         this.usuarioRepository = usuarioRepository;
         this.passwordEncoder = passwordEncoder;
         this.tokenService = tokenService;
+        this.authenticationManager = authenticationManager;
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(username).orElseThrow(() -> new UsernameNotFoundException("Usuario não encontrado"));
-        return new User(usuario.getEmail(), usuario.getSenha(), new ArrayList<>());
-    }
 
     public ResponseTokenDto login(LoginRequestDto loginRequestDto) {
-        Usuario usuario = usuarioRepository.findByEmail(loginRequestDto.email()).orElseThrow(() -> new UsernameNotFoundException("Login ou Senha inválidos"));
-        if(passwordEncoder.matches(loginRequestDto.senha(), usuario.getSenha())) {
-            String token = tokenService.gerarToken(usuario);
-            return new ResponseTokenDto(token);
-        }
-
-        throw new UsernameNotFoundException("Login ou Senha inválidos");
+        UsernamePasswordAuthenticationToken userNamePassword = new UsernamePasswordAuthenticationToken(loginRequestDto.email(), loginRequestDto.senha());
+        Authentication auth = authenticationManager.authenticate(userNamePassword);
+        Usuario usuario = (Usuario) auth.getPrincipal();
+        String token = tokenService.gerarToken(usuario);
+        return new ResponseTokenDto(token);
     }
 
     public ResponseTokenDto register(RegisterRequestDto registerRequestDto) {

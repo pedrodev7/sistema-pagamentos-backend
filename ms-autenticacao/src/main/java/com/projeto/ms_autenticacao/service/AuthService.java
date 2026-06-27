@@ -36,13 +36,13 @@ public class AuthService implements UserDetailsService {
     }
 
     public ResponseTokenDto login(LoginRequestDto loginRequestDto) {
-        Usuario usuario = usuarioRepository.findByEmail(loginRequestDto.email()).orElseThrow(() -> new UsernameNotFoundException("Usuario não encontrado"));
+        Usuario usuario = usuarioRepository.findByEmail(loginRequestDto.email()).orElseThrow(() -> new UsernameNotFoundException("Login ou Senha inválidos"));
         if(passwordEncoder.matches(loginRequestDto.senha(), usuario.getSenha())) {
             String token = tokenService.gerarToken(usuario);
             return new ResponseTokenDto(token);
         }
 
-        throw new RuntimeException("Senha incorreta");
+        throw new UsernameNotFoundException("Login ou Senha inválidos");
     }
 
     public ResponseTokenDto register(RegisterRequestDto registerRequestDto) {

@@ -21,6 +21,7 @@ public class UsuarioConsumer {
         Conta conta = new Conta();
         conta.setUsuarioId(usuarioEvent.id());
         conta.setSaldo(new BigDecimal(100));
+        conta.setEmail(usuarioEvent.email());
 
         contaRepository.save(conta);
 

@@ -17,6 +17,7 @@ public class Conta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private Long usuarioId;
+    private String email;
     private BigDecimal saldo = BigDecimal.ZERO;
 
 }

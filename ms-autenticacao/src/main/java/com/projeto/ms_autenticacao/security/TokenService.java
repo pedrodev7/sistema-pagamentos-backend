@@ -23,7 +23,7 @@ public class TokenService {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.create()
                     .withIssuer("ms-autenticacao")
-                    .withSubject(usuario.getEmail())
+                    .withSubject(usuario.getId().toString())
                     .withExpiresAt(this.gerarTempoExpiracao())
                     .sign(algorithm);
 

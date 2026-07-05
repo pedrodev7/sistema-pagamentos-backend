@@ -22,7 +22,6 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        System.out.println("🛡️ FILTRO DE SEGURANÇA CHAMADO PARA A URL: " + request.getRequestURI());
         String token = recuperarToken(request);
         if(token != null) {
             String subject = tokenService.validarToken(token);

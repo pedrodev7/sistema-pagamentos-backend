@@ -3,9 +3,11 @@ package com.projeto.ms_transacoes.service;
 import com.projeto.ms_transacoes.domain.Conta;
 import com.projeto.ms_transacoes.domain.StatusTransacao;
 import com.projeto.ms_transacoes.domain.Transacao;
+import com.projeto.ms_transacoes.dto.TransacaoEvent;
 import com.projeto.ms_transacoes.dto.TransferenciaRequestDTO;
 import com.projeto.ms_transacoes.exception.ContaNaoEncontradaException;
 import com.projeto.ms_transacoes.exception.SaldoInsuficienteException;
+import com.projeto.ms_transacoes.messaging.producer.TransacaoProducer;
 import com.projeto.ms_transacoes.repository.ContaRepository;
 import com.projeto.ms_transacoes.repository.TransacaoRepository;
 
@@ -23,10 +25,12 @@ import java.time.LocalDateTime;
 public class TransacaoService {
     private final ContaRepository contaRepository;
     private final RegistroTransacaoService registroTransacaoService;
+    private final TransacaoProducer transacaoProducer;
 
-    public TransacaoService(ContaRepository contaRepository, RegistroTransacaoService registroTransacaoService) {
+    public TransacaoService(ContaRepository contaRepository, RegistroTransacaoService registroTransacaoService, TransacaoProducer transacaoProducer) {
         this.contaRepository = contaRepository;
         this.registroTransacaoService = registroTransacaoService;
+        this.transacaoProducer = transacaoProducer;
     }
 
     @Transactional
@@ -52,6 +56,12 @@ public class TransacaoService {
 
         contaRepository.save(contaOrigem);
         contaRepository.save(contaDestino);
+
+        transacaoProducer.enviarNotificacaoDeTransferencia(new TransacaoEvent(
+                contaOrigem.getUsuarioId(),
+                contaDestino.getUsuarioId(),
+                transferenciaRequestDTO.valor()
+        ));
 
         return registroTransacaoService.salvarTransacao(contaOrigem, contaDestino, transferenciaRequestDTO.valor(), StatusTransacao.SUCESSO);
     }
